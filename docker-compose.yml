@@ -1,0 +1,48 @@
+version: '3.4'
+
+services:
+  ksp-dark:
+    image: mono
+    command: ["mono", "/DMPServer/DMPServer.exe"]
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ksp-dark:/DMPServer
+    ports:
+      - 26702:26702
+    stdin_open: true
+    tty: true
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: 
+          - ${NODE_PLACEMENT}
+
+
+  filebrowser:
+    image: hurlenko/filebrowser
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ksp-dark:/data/DMPServer/
+      - filebrowser-config:/config
+    networks:
+      - caddy-public
+    deploy:
+      mode: replicated
+      replicas: 0
+      placement:
+        constraints: 
+          - ${NODE_PLACEMENT}
+      labels:
+        caddy: ${FILEBROWSER_DOMAIN}
+        caddy.reverse_proxy: "{{upstreams 8080}}"
+
+
+volumes:
+  ksp-dark:
+  filebrowser-config:
+
+
+networks:
+  caddy-public:
+    external: true
